@@ -7,8 +7,8 @@ AV.init({
     appId: "tuatIQNYBRO70Vngqs6kjWsd-9Nh9j0Va",
     appKey: "iY5alJzEMMfe5LfGjSN0ECN1",
     serverURLs: "https://tuatiqny.lc-cn-e1-shared.com",
-  });
-  
+});
+
 // 即时通讯服务
 var { Realtime, TextMessage } = require('leancloud-realtime');
 
@@ -31,6 +31,31 @@ function fetch(id) {
     var query = new AV.Query('Teacher');
     query.get(id).then(function (new_teacher) {
         console.log(new_teacher.toJSON());
+    });
+}
+
+function findAllAndUpdateAll() {
+    var query = new AV.Query('Teacher');
+    query.find().then(function (teachers) {
+        // 获取需要更新的 todo
+        teachers.forEach(function (teachers) {
+            // 更新属性值
+            teachers.set('age', 10);
+        });
+        // 批量更新
+        AV.Object.saveAll(teachers);
+    });
+}
+
+function joinFetch() {
+    var studentQuery = new AV.Query('Student');
+    var countryQuery = new AV.Query('Country');
+    // 获取所有的英语国家
+    countryQuery.equalTo('language', 'English');
+    // 把 Student 的 nationality 和 Country 的 name 关联起来
+    studentQuery.matchesKeyInQuery('nationality', 'name', countryQuery);
+    studentQuery.find().then(function (students) {
+        // students 包含 John Doe 和 Tom Sawyer
     });
 }
 
