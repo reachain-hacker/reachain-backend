@@ -2,17 +2,21 @@
 // var AV = require('leancloud-storage');
 // 有了这一行，无需另外 require('leancloud-storage')
 var AV = require('leancloud-storage/live-query');
-var { Query, User } = AV;
 AV.init({
     appId: "tuatIQNYBRO70Vngqs6kjWsd-9Nh9j0Va",
     appKey: "iY5alJzEMMfe5LfGjSN0ECN1",
     serverURLs: "https://tuatiqny.lc-cn-e1-shared.com",
 });
 
-// 即时通讯服务
-var { Realtime, TextMessage } = require('leancloud-realtime');
+listMembers("5dc52e66f4f71d0008b65ef9")
 
-subscribe();
+// teach("5dc52aacf4f71d0008b65e6c", "First Lesson", "IT")
+
+// learn("5dc53b69adfc9d0009d3a0e2", "5dc52e66f4f71d0008b65ef9")
+
+// award("5dc52ffcadfc9d0009d39e57", "5dc52e66f4f71d0008b65ef9", 5)
+
+// subscribe();
 
 // save();
 
@@ -34,13 +38,22 @@ function fetch(id) {
     });
 }
 
+function fetchByField(table, field, value, equal = true) {
+    var query = new AV.Query(table);
+    equal ? query.equalTo(field, value) : query.notEqualTo(field, value)
+    query.find().then(function (items) {
+        console.log(items.toJSON());
+        return items
+    });
+}
+
 function findAllAndUpdateAll() {
     var query = new AV.Query('Teacher');
     query.find().then(function (teachers) {
         // 获取需要更新的 todo
-        teachers.forEach(function (teachers) {
+        teachers.forEach(function (teacher) {
             // 更新属性值
-            teachers.set('age', 10);
+            teacher.set('age', 10);
         });
         // 批量更新
         AV.Object.saveAll(teachers);
@@ -86,3 +99,58 @@ function subscribe() {
     });
 }
 
+// 用户开课
+function teach(userId, title, type) {
+    console.log("开课")
+    user = AV.Object.createWithoutData("Users", userId)
+    var TestObject = AV.Object.extend('Lessons');
+    var testObject = new TestObject();
+    testObject.set('title', title);
+    testObject.set('type', type);
+    testObject.set('created_by', user)
+    testObject.save().then(function (lesson) {
+        console.log('保存成功');
+    });
+}
+
+function learn(userId, lessonId) {
+    console.log("开始学习")
+    user = AV.Object.createWithoutData("Users", userId)
+    lesson = AV.Object.createWithoutData("Lessons", lessonId)
+    var TestObject = AV.Object.extend('Lesson_Members');
+    var testObject = new TestObject();
+    testObject.set('member', user);
+    testObject.set('lesson', lesson);
+    testObject.set('stats', 0)
+    testObject.save().then(function (lesson) {
+        console.log('保存成功');
+    });
+}
+
+function award(userId, lessonId, stats) {
+    console.log("加分")
+    var query = new AV.Query('Lesson_Members')
+    user = AV.Object.createWithoutData("Users", userId)
+    lesson = AV.Object.createWithoutData("Lessons", lessonId)
+    query.equalTo("member", user)
+    query.equalTo("lesson", lesson)
+
+    query.first().then(participation => {
+        console.log("当前stats => " + participation.get("stats"))
+        participation.increment("stats", stats)
+        participation.save()
+    })
+}
+
+function listMembers(lesson){
+    lesson = new AV.Object.createWithoutData("Lessons", lesson)
+
+    query = new AV.Query("Lesson_Members")
+    query.equalTo("lesson", lesson)
+    query.find().then(lesson_members => {
+        members = lesson_members.map(lm => lm.get("member").id)
+        //ids
+        console.log(members)
+    })
+
+}
